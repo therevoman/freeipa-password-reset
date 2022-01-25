@@ -54,10 +54,9 @@ class SetPassword(View):
             }
             return HttpResponse(template.render(context, request), status=500)
         else:
-            template = loader.get_template('setpassword.html')
+            template = loader.get_template('index.html')
             context = {
-                'msg': mark_safe('Password successfully changed. <a href="/ipa/ui/">You can login here.</a>'),
+                'msg': mark_safe('Password successfully changed.'),
                 'error': False,
-                'uid': request.POST['uid'],
             }
             return HttpResponse(template.render(context, request))

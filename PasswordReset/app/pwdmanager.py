@@ -5,10 +5,14 @@ from ipalib import api, errors as ipaerrors
 import redis
 import re
 import subprocess
+#import os
+#import requests
 from random import SystemRandom
 from datetime import datetime, timedelta
-
 import sys
+#from python_freeipa.exceptions import *
+from password_strength import PasswordPolicy
+
 if sys.version_info.major == 3:
     unicode = str
 
@@ -42,6 +46,9 @@ class PasswdManager():
             api.finalize()
         api.Backend.rpcclient.connect()
         self.redis = redis.StrictRedis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=settings.REDIS_DB, password=settings.REDIS_PASSWORD)
+#        self.current_host = os.uname()[1]
+#        self._session = requests.Session()
+        
     
     @staticmethod
     def __kerberos_has_ticket():
@@ -58,7 +65,59 @@ class PasswdManager():
         process.communicate()
         if process.returncode != 0:
             raise  KerberosInitFailed("Cannot retrieve kerberos ticket.")
-    
+######## Change Password using the url ###########
+#    def __change_password(self, uid, old_password, new_password, otp=None):
+#        """
+#        private function, use change_password instead
+#        """
+#        password_url = 'https://{0}/ipa/session/change_password'.format(self.current_host)
+#        headers = {
+#            'Content-Type': 'application/x-www-form-urlencoded',
+#            'Accept': 'text/plain',
+#        }
+#
+#        data = {
+#            'user': uid,
+#            'new_password': new_password,
+#            'old_password': old_password,
+#        }
+#        if otp:
+#            data['otp'] = otp
+#        response = self._session.post(
+#            password_url, headers=headers, data=data, verify=True
+#        )
+#
+#        if not response.ok:
+#            raise FreeIPAError(message=response.text, code=response.status_code)
+#
+#        pwchange_result = response.headers.get('X-IPA-Pwchange-Result', None)
+#        if pwchange_result != 'ok':
+#            if pwchange_result == 'invalid-password':
+#                raise SetPasswordFailed("Cannot update your password. You have entered {0}".format(pwchange_result))
+#            elif pwchange_result == 'policy-error':
+#                policy_error = response.headers.get('X-IPA-Pwchange-Policy-Error', None)
+#                raise SetPasswordFailed("Cannot update your password. {0}".format(policy_error))
+#            else:
+#                raise FreeIPAError(message=response.text, code=response.status_code)
+#        return response
+#
+#######################################################   
+
+############### Validate Password Policy #####################
+    def __vaidate_password(self, new_password):
+        policy = PasswordPolicy.from_names(
+            length=8,  # min length: 8
+            uppercase=2,  # need min. 2 uppercase letters
+            numbers=2,  # need min. 2 digits
+            special=1,  # need min. 2 special characters
+            nonletters=0,  # need min. 2 non-letter characters (digits, specials, anything)
+        )
+        
+        validate = policy.test(new_password)
+        if validate:
+            raise SetPasswordFailed("Cannot update your password. Your password should have atleast {0}".format(validate))
+        
+##############################################################
     def __set_password(self, uid, password):
         try:
             api.Command.user_mod(uid=unicode(uid), userpassword=unicode(password))
@@ -132,10 +191,11 @@ class PasswdManager():
         
     def second_phase(self, uid, token, new_password):
         self.__validate_token(uid, token)
+        self.__vaidate_password(new_password)
         self.__set_password(uid, new_password)
+#        self.__change_password(uid, old_password, new_password)
         self.__invalidate_token(uid)
-
-
+        
 def get_providers():
     providers = []
     for key, value in settings.PROVIDERS.items():
