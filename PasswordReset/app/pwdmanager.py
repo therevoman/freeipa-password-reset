@@ -115,7 +115,7 @@ class PasswdManager():
         
         validate = policy.test(new_password)
         if validate:
-            raise SetPasswordFailed("Cannot update your password. Your password should have atleast {0}".format(validate))
+            raise SetPasswordFailed("Cannot update your password. Your password should have at least {0}".format(validate))
         
 ##############################################################
     def __set_password(self, uid, password):
