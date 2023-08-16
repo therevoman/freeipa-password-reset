@@ -79,6 +79,8 @@ pip install -r requirements.txt
 ```
 ipa-getkeytab -p ldap-passwd-reset -k /opt/data/IPAPasswordReset/ldap-passwd-reset.keytab
 ```
+Beware that each time you generate a new keytab with ipa-getkeytab, the secret of the principal get reset. Which means all other tickets are then invalidated. Therefore, should you have to use a keytab for the same principal in different machine, you'll have to either copy the keytab over all the servers which require it or create a dedicate principal for each service.
+
 5. chown files (change username if you use not default):
 ```
 chown -R ldap-passwd-reset:ldap-passwd-reset /opt/data/IPAPasswordReset
