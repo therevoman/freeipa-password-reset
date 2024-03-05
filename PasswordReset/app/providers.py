@@ -80,6 +80,7 @@ class Email():
         self.smtp_server_addr = options['smtp_server_addr']
         self.smtp_server_port = options['smtp_server_port']
         self.smtp_server_tls = options['smtp_server_tls']
+        self.smtp_server_ssl = options['smtp_server_ssl']
         if ('smtp_from' in options) and (options['smtp_from'] is not None):
             self.smtp_from = options['smtp_from']
         else:
@@ -109,8 +110,15 @@ class Email():
             msg['Subject'] = self.msg_subject
             msg['From'] = self.smtp_from
             msg['To'] = ", ".join(recipients)
-            s = smtplib.SMTP("{0}:{1}".format(self.smtp_server_addr, self.smtp_server_port))
-            if self.smtp_server_tls:
+            print("smtp_server_ssl is " + str(self.smtp_server_ssl))
+            print("{0}:{1}".format(self.smtp_server_addr, self.smtp_server_port))
+            if self.smtp_server_ssl is True:
+                s = smtplib.SMTP_SSL("{0}:{1}".format(self.smtp_server_addr, self.smtp_server_port))
+                #with smtplib.SMTP_SSL("{0}:{1}".format(self.smtp_server_addr, self.smtp_server_port)) as s
+            else:
+                s = smtplib.SMTP("{0}:{1}".format(self.smtp_server_addr, self.smtp_server_port))
+
+            if self.smtp_server_tls is True:
                 s.ehlo()
                 s.starttls(tuple())
                 s.ehlo()
