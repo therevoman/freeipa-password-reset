@@ -69,6 +69,7 @@ class PasswdManager():
     
     @staticmethod
     def __kerberos_init():
+        print("process = subprocess.Popen(['/usr/bin/kinit', '-k', '-t', " + str(settings.KEYTAB_PATH) + ", " + str(settings.LDAP_USER) + ", ], stderr=subprocess.STDOUT, stdout=subprocess.PIPE)")
         process = subprocess.Popen(['/usr/bin/kinit', '-k', '-t', str(settings.KEYTAB_PATH), str(settings.LDAP_USER), ], stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
         process.communicate()
         if process.returncode != 0:
@@ -114,9 +115,9 @@ class PasswdManager():
 ############### Validate Password Policy #####################
     def __vaidate_password(self, new_password):
         policy = PasswordPolicy.from_names(
-            length=8,  # min length: 8
+            length=10,  # min length: 8
             uppercase=1,  # need min. 2 uppercase letters
-            numbers=2,  # need min. 2 digits
+            numbers=1,  # need min. 2 digits
             special=1,  # need min. 2 special characters
             nonletters=0,  # need min. 2 non-letter characters (digits, specials, anything)
         )

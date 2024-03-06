@@ -14,8 +14,10 @@ import environ
 
 env = environ.Env(
     # set casting, default value
-    DEBUG=(bool, False), 
+    DEBUG=(bool, False),
+
     LDAP_USER=(str, "ldap-passwd-reset"),
+    KEYTAB_PATH=(str, "../ldap-passwd-reset.keytab"),
 
     SECRET_KEY=(str, None),
     AWS_REGION=(str, "eu-west-1"),
@@ -153,7 +155,7 @@ REDIS_DB = env('REDIS_DB')
 REDIS_PASSWORD = env('REDIS_PASSWORD')
 
 LDAP_USER = env('LDAP_USER')
-KEYTAB_PATH = "../ldap-passwd-reset.keytab"
+KEYTAB_PATH = env('KEYTAB_PATH')
 
 TOKEN_LEN = 6
 TOKEN_LIFETIME = 3600
