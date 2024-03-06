@@ -11,7 +11,30 @@ https://docs.djangoproject.com/en/1.11/ref/settings/
 import os
 import app.providers
 import environ
-env = environ.Env()
+
+env = environ.Env(
+    # set casting, default value
+    DEBUG=(bool, False),
+
+    LDAP_USER=(str, "ldap-passwd-reset"),
+    KEYTAB_PATH=(str, "../ldap-passwd-reset.keytab"),
+
+    SECRET_KEY=(str, None),
+    AWS_REGION=(str, "eu-west-1"),
+
+    SMTP_SERVER_TLS=(bool, True),
+    SMTP_SERVER_SSL=(bool, False),
+    SMTP_FROM=(str, 'admin@localhost'),
+    SMTP_USER=(str, None),
+    SMTP_PASS=(str, None),
+    SMTP_SERVER_ADDR=(str, 'localhost'),
+    SMTP_SERVER_PORT=(int, 587),
+
+    REDIS_HOST=(str, 'localhost'),
+    REDIS_PORT=(int, 6379),
+    REDIS_DB=(int, 0),
+    REDIS_PASSWORD=(str, None)
+)
 environ.Env.read_env()
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -22,7 +45,8 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+#DEBUG = False
+DEBUG = env('DEBUG')
 
 ALLOWED_HOSTS = ['*',   ]
 
@@ -123,14 +147,15 @@ STATIC_URL = '/static/'
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = env('SECRET_KEY')
+AWS_REGION = env('AWS_REGION')
 
-REDIS_HOST = 'localhost'
-REDIS_PORT = 6379
-REDIS_DB = 0
-REDIS_PASSWORD = None
+REDIS_HOST = env('REDIS_HOST')
+REDIS_PORT = env('REDIS_PORT')
+REDIS_DB = env('REDIS_DB')
+REDIS_PASSWORD = env('REDIS_PASSWORD')
 
-LDAP_USER = "ldap-passwd-reset"
-KEYTAB_PATH = "../ldap-passwd-reset.keytab"
+LDAP_USER = env('LDAP_USER')
+KEYTAB_PATH = env('KEYTAB_PATH')
 
 TOKEN_LEN = 6
 TOKEN_LIFETIME = 3600
@@ -143,7 +168,7 @@ LIMIT_TIME = 86400
 PROVIDERS = {
     "aws-sns-1": {
         "class": app.providers.AmazonSNS,
-        "enabled": True,
+        "enabled": False,
         "display_name": "SMS",
         "options": {
             "ldap_attribute_name": "telephonenumber",
@@ -151,7 +176,7 @@ PROVIDERS = {
             "msg_template": "Your reset password token: {0} \nDo not tell anyone this code.",
             "aws_key": "",
             "aws_secret": "",
-            "aws_region": "eu-west-1",
+            "aws_region": env('AWS_REGION'),
             "sender_id": "LDAP",
         },
     },
@@ -168,7 +193,8 @@ PROVIDERS = {
             "smtp_pass": env('SMTP_PASS'),
             "smtp_server_addr": env('SMTP_SERVER_ADDR'),
             "smtp_server_port": env('SMTP_SERVER_PORT'),
-            "smtp_server_tls": True,
+            "smtp_server_tls": env('SMTP_SERVER_TLS'),
+            "smtp_server_ssl": env('SMTP_SERVER_SSL'),
         },
     },
     "signal-1": {

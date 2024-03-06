@@ -44,8 +44,16 @@ class PasswdManager():
         if api.isdone('finalize') is False:
             api.bootstrap_with_global_options(context='api')
             api.finalize()
-        api.Backend.rpcclient.connect()
-        self.redis = redis.StrictRedis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=settings.REDIS_DB, password=settings.REDIS_PASSWORD)
+        print("before rpcclient.connect()")
+        if not api.Backend.rpcclient.isconnected():
+            api.Backend.rpcclient.connect()
+            print("after rpcclient.connect()")
+        try:
+            print("try redis.StrictRedis")
+            self.redis = redis.StrictRedis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=settings.REDIS_DB, password=settings.REDIS_PASSWORD)
+        except errors.NotFound:
+            print("error redis.StrictRedis")
+        print("after redis.StrictRedis")
 #        self.current_host = os.uname()[1]
 #        self._session = requests.Session()
         
@@ -61,6 +69,7 @@ class PasswdManager():
     
     @staticmethod
     def __kerberos_init():
+        print("process = subprocess.Popen(['/usr/bin/kinit', '-k', '-t', " + str(settings.KEYTAB_PATH) + ", " + str(settings.LDAP_USER) + ", ], stderr=subprocess.STDOUT, stdout=subprocess.PIPE)")
         process = subprocess.Popen(['/usr/bin/kinit', '-k', '-t', str(settings.KEYTAB_PATH), str(settings.LDAP_USER), ], stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
         process.communicate()
         if process.returncode != 0:
@@ -106,9 +115,9 @@ class PasswdManager():
 ############### Validate Password Policy #####################
     def __vaidate_password(self, new_password):
         policy = PasswordPolicy.from_names(
-            length=8,  # min length: 8
-            uppercase=2,  # need min. 2 uppercase letters
-            numbers=2,  # need min. 2 digits
+            length=10,  # min length: 8
+            uppercase=1,  # need min. 2 uppercase letters
+            numbers=1,  # need min. 2 digits
             special=1,  # need min. 2 special characters
             nonletters=0,  # need min. 2 non-letter characters (digits, specials, anything)
         )
@@ -135,7 +144,7 @@ class PasswdManager():
         try:
             user = api.Command.user_show(uid=unicode(uid), all=True)
         except ipaerrors.NotFound:
-            raise ValidateUserFailed("User not found")
+            raise ValidateUserFailed("User not configured properly")
         except Exception:
             raise BackendError("Cannot fetch user information")
         if user['result']['nsaccountlock'] is True:
